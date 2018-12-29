@@ -117,7 +117,6 @@ public class ImageUtils {
 
     public static Object[] argmax(float[] array){
 
-
         int best = -1;
         float best_confidence = 0.0f;
 
@@ -131,12 +130,7 @@ public class ImageUtils {
                 best = i;
             }
         }
-
-
-
         return new Object[]{best,best_confidence};
-
-
     }
 
 
@@ -154,11 +148,9 @@ public class ImageUtils {
 
             label = object.getString(String.valueOf(index));
 
-
-
         }
         catch (Exception e){
-
+            System.out.println("Exception: " + e);
 
         }
         return label;

@@ -17,6 +17,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -30,6 +31,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_CODE = 1000;
     private static final int IMAGE_CAPTURE_COD = 1001;
 
+    private static final int REQUEST_IMAGE_CAPTURE = 1;
+
     //Load the tensorflow inference library
     static {
         System.loadLibrary("tensorflow_inference");
@@ -40,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
     private String INPUT_NAME = "input_1";
     private String OUTPUT_NAME = "output_1";
     private TensorFlowInferenceInterface tf;
+
+    private static final String TAG = "Main Activity";
 
     //ARRAY TO HOLD THE PREDICTIONS AND FLOAT VALUES TO HOLD THE IMAGE DATA
     float[] PREDICTIONS = new float[1000];
@@ -64,14 +69,19 @@ public class MainActivity extends AppCompatActivity {
         imageView = findViewById(R.id.imageView);
 
         //initialize tensorflow with the AssetManager and the Model
-        tf = new TensorFlowInferenceInterface(getAssets(),MODEL_PATH);
+        // NOTE: Does not work yet, because the lack of an actual prediction model
+        try {
+            tf = new TensorFlowInferenceInterface(getAssets(),MODEL_PATH);
+        } catch (Exception e){
+            Toast.makeText(getApplicationContext(), "Unable to load TensorflowIngerenceInterface", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Exception: " + e);
+        }
 
         // Button click
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivity(intent);
+                dispatchTakePictureIntent();
             }
         });
 
@@ -80,15 +90,31 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 try {
                     Bitmap image = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-                    predict(image);
+                    if (image != null) {
+                        Toast.makeText(getApplicationContext(), "Able to get the bitmap from imageview", Toast.LENGTH_LONG).show();
+                    } else {
+                        Toast.makeText(getApplicationContext(), "Unable to get bitmap from imageview", Toast.LENGTH_LONG).show();
+                    }
+                    // predict(image);
                 } catch (Exception e){
-                    Toast.makeText(MainActivity.this, "Nope", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), "Unable to predict on image", Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Exception when trying to predict on image: " + e);
                 }
             }
         });
     }
 
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        }
+    }
+
+    // Not currently in use
     private void openCamera() {
+        Log.i(TAG, "Opening Camera");
+
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.TITLE, "New Picture");
         values.put(MediaStore.Images.Media.DESCRIPTION, "From the camera");
@@ -118,18 +144,20 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        Toast.makeText(this, "Image captured on activity result", Toast.LENGTH_SHORT).show();
         // Called when image was captured from camera
-
-        if (resultCode == RESULT_OK){
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK){
+            Bundle extras = data.getExtras();
+            Bitmap imageBitmap = (Bitmap) extras.get("data");
             // Set image captured to ImageView
-            imageView.setImageURI(image_uri);
+            imageView.setImageBitmap(imageBitmap);
+        } else {
+            Toast.makeText(this, "Not able to capture image from camera", Toast.LENGTH_SHORT).show();
         }
     }
 
     //FUNCTION TO COMPUTE THE MAXIMUM PREDICTION AND ITS CONFIDENCE
     public Object[] argmax(float[] array){
-
-
         int best = -1;
         float best_confidence = 0.0f;
 
@@ -143,15 +171,12 @@ public class MainActivity extends AppCompatActivity {
                 best = i;
             }
         }
-
         return new Object[]{best,best_confidence};
     }
 
     // Run prediction on an image
     @SuppressLint("StaticFieldLeak")
     public void predict(final Bitmap bitmap){
-
-
         //Runs inference in background thread
         new AsyncTask<Integer,Integer,Integer>(){
 
@@ -189,8 +214,6 @@ public class MainActivity extends AppCompatActivity {
                     //Convert predicted class index into actual label name
                     final String label = ImageUtils.getLabel(getAssets().open("labels.json"),class_index);
 
-
-
                     //Display result on UI
                     runOnUiThread(new Runnable() {
                         @Override
@@ -203,9 +226,8 @@ public class MainActivity extends AppCompatActivity {
                     });
 
                 }
-
                 catch (Exception e){
-
+                    Log.e(TAG, "Exception when running inference: " + e);
                 }
                 return 0;
             }
@@ -213,6 +235,5 @@ public class MainActivity extends AppCompatActivity {
 
 
         }.execute(0);
-
     }
 }
