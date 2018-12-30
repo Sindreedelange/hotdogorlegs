@@ -39,9 +39,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //PATH TO OUR MODEL FILE AND NAMES OF THE INPUT AND OUTPUT NODES
-    private String MODEL_PATH = "file:///android_asset/squeezenet.pb";
-    private String INPUT_NAME = "input_1";
-    private String OUTPUT_NAME = "output_1";
+    private String MODEL_PATH = "file:///android_asset/inception_v4.pb";
+    private String INPUT_NAME = "input";
+    private String OUTPUT_NAME = "output";
     private TensorFlowInferenceInterface tf;
 
     private static final String TAG = "Main Activity";
@@ -95,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(getApplicationContext(), "Unable to get bitmap from imageview", Toast.LENGTH_LONG).show();
                     }
-                    // predict(image);
+                    predict(image);
                 } catch (Exception e){
                     Toast.makeText(getApplicationContext(), "Unable to predict on image", Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Exception when trying to predict on image: " + e);
@@ -181,7 +181,6 @@ public class MainActivity extends AppCompatActivity {
         new AsyncTask<Integer,Integer,Integer>(){
 
             @Override
-
             protected Integer doInBackground(Integer ...params){
 
                 //Resize the image into 224 x 224
@@ -206,7 +205,6 @@ public class MainActivity extends AppCompatActivity {
                 int class_index = (Integer) results[0];
                 float confidence = (Float) results[1];
 
-
                 try{
 
                     final String conf = String.valueOf(confidence * 100).substring(0,5);
@@ -224,16 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
                         }
                     });
-
                 }
                 catch (Exception e){
                     Log.e(TAG, "Exception when running inference: " + e);
                 }
                 return 0;
             }
-
-
-
         }.execute(0);
     }
 }
