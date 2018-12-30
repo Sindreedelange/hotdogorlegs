@@ -93,8 +93,6 @@ public class ImageUtils {
         canvas.drawBitmap(source, frameToCropTransformations, null);
 
         return croppedBitmap;
-
-
     }
 
     public static float[] normalizeBitmap(Bitmap source,int size,float mean,float std){

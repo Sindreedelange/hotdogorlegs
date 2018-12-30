@@ -41,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     //PATH TO OUR MODEL FILE AND NAMES OF THE INPUT AND OUTPUT NODES
     private String MODEL_PATH = "file:///android_asset/inception_v4.pb";
     private String INPUT_NAME = "input";
-    private String OUTPUT_NAME = "output";
+    private String OUTPUT_NAME = "InceptionV4/Logits/Predictions";
     private TensorFlowInferenceInterface tf;
 
     private static final String TAG = "Main Activity";
@@ -95,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(getApplicationContext(), "Unable to get bitmap from imageview", Toast.LENGTH_LONG).show();
                     }
+                    Toast.makeText(getApplicationContext(), "Trying to predict on image", Toast.LENGTH_LONG).show();
                     predict(image);
                 } catch (Exception e){
                     Toast.makeText(getApplicationContext(), "Unable to predict on image", Toast.LENGTH_LONG).show();
@@ -185,10 +186,8 @@ public class MainActivity extends AppCompatActivity {
 
                 //Resize the image into 224 x 224
                 Bitmap resized_image = ImageUtils.processBitmap(bitmap,224);
-
                 //Normalize the pixels
                 floatValues = ImageUtils.normalizeBitmap(resized_image,224,127.5f,1.0f);
-
                 //Pass input into the tensorflow
                 tf.feed(INPUT_NAME,floatValues,1,224,224,3);
 
@@ -224,7 +223,7 @@ public class MainActivity extends AppCompatActivity {
                     });
                 }
                 catch (Exception e){
-                    Log.e(TAG, "Exception when running inference: " + e);
+                    Log.e(TAG, "####################### \n Exception when running inference: " + e + "\n #########################");
                 }
                 return 0;
             }
