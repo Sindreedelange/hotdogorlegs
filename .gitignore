@@ -1,5 +1,6 @@
 app/src/main/assets/*
 utils/tensorflow/*
+*.ipynb_checkpoints*
 
 # Created by https://www.gitignore.io/api/androidstudio
 # Edit at https://www.gitignore.io/?templates=androidstudio
